@@ -24,27 +24,41 @@ router.post("/create", authMiddleware, async (req, res) => {
   }
 });
 
-// Add a question to a quiz
+// Add multiple questions to a quiz
 router.post("/:quizId/questions", authMiddleware, async (req, res) => {
   const { quizId } = req.params;
-  const { questionText, optionType, options, timer } = req.body;
+  const { questions } = req.body; // Expecting an array of questions
 
   try {
-    const question = new Question({
-      quiz: quizId,
-      questionText,
-      optionType,
-      options,
-      timer,
-    });
-    await question.save();
-
+    // Check if the quiz exists
     const quiz = await Quiz.findById(quizId);
-    quiz.questions.push(question);
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Validate the input
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({ message: "Invalid input format" });
+    }
+
+    // Save questions and associate them with the quiz
+    const savedQuestions = [];
+    for (const question of questions) {
+      const newQuestion = new Question({
+        quiz: quizId,
+        ...question,
+      });
+      await newQuestion.save();
+      savedQuestions.push(newQuestion);
+    }
+
+    // Update the quiz with the new questions
+    quiz.questions = savedQuestions.map((q) => q._id);
     await quiz.save();
 
-    res.status(201).json(question);
+    res.status(201).json({ quiz, questions: savedQuestions });
   } catch (error) {
+    console.error("Server error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -57,6 +71,31 @@ router.get("/myquizzes", authMiddleware, async (req, res) => {
     );
     res.json(quizzes);
   } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get detailed information about a specific quiz, including its questions
+router.get("/:quizId", async (req, res) => {
+  const { quizId } = req.params;
+
+  try {
+    // Find the quiz and populate the questions
+    const quiz = await Quiz.findById(quizId).populate({
+      path: "questions",
+      populate: {
+        path: "options",
+        model: "Option", // Assuming options are a separate model; adjust if needed
+      },
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    res.status(200).json(quiz);
+  } catch (error) {
+    console.error("Server error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
