@@ -93,6 +93,11 @@ router.get("/:quizId", async (req, res) => {
       return res.status(404).json({ message: "Quiz not found" });
     }
 
+    // Increment the views count
+    quiz.views += 1;
+    console.log("Incrementing views, new count:", quiz.views);
+    await quiz.save();
+
     res.status(200).json(quiz);
   } catch (error) {
     console.error("Server error:", error);
