@@ -93,12 +93,58 @@ router.get("/:quizId", async (req, res) => {
       return res.status(404).json({ message: "Quiz not found" });
     }
 
+    res.status(200).json(quiz);
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/:quizId/views", async (req, res) => {
+  const { quizId } = req.params;
+
+  try {
+    // Find the quiz by ID
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
     // Increment the views count
     quiz.views += 1;
     console.log("Incrementing views, new count:", quiz.views);
+
+    // Save the updated quiz
     await quiz.save();
 
-    res.status(200).json(quiz);
+    res
+      .status(200)
+      .json({ message: "Views count incremented", views: quiz.views });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete quiz and associated questions by quizId
+router.delete("/:quizId", async (req, res) => {
+  const { quizId } = req.params;
+
+  try {
+    // Find and delete the quiz by ID
+    const deletedQuiz = await Quiz.findByIdAndDelete(quizId);
+
+    if (!deletedQuiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Delete associated questions (assuming you have a separate collection for questions)
+    await Question.deleteMany({ quiz: quizId });
+
+    res
+      .status(200)
+      .json({ message: "Quiz and associated questions deleted successfully" });
   } catch (error) {
     console.error("Server error:", error);
     res.status(500).json({ message: "Server error" });
