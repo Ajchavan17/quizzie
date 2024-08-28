@@ -71,8 +71,9 @@ router.post("/quiz/:quizId/poll", async (req, res) => {
         });
       }
 
-      let option = pollAnalytics.options.find(
-        (opt) => opt.optionId === selectedOptionId
+      // Use .equals() for ObjectId comparison
+      let option = pollAnalytics.options.find((opt) =>
+        opt.optionId.equals(selectedOptionId)
       );
 
       if (!option) {
