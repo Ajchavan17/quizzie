@@ -151,4 +151,68 @@ router.delete("/:quizId", async (req, res) => {
   }
 });
 
+// Update quiz details (e.g., name, type)
+router.put("/:quizId", authMiddleware, async (req, res) => {
+  const { quizId } = req.params;
+  const { name, type } = req.body;
+
+  try {
+    // Find the quiz by ID
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Update quiz details
+    if (name) quiz.name = name;
+    if (type) quiz.type = type;
+
+    // Save the updated quiz
+    await quiz.save();
+
+    res.status(200).json({ message: "Quiz updated successfully", quiz });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update a specific question in a quiz
+router.put(
+  "/:quizId/questions/:questionId",
+  authMiddleware,
+  async (req, res) => {
+    const { quizId, questionId } = req.params;
+    const updatedData = req.body;
+
+    try {
+      // Check if the quiz exists
+      const quiz = await Quiz.findById(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      // Check if the question exists
+      const question = await Question.findById(questionId);
+      if (!question || question.quiz.toString() !== quizId) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+
+      // Update question details
+      Object.assign(question, updatedData);
+
+      // Save the updated question
+      await question.save();
+
+      res
+        .status(200)
+        .json({ message: "Question updated successfully", question });
+    } catch (error) {
+      console.error("Server error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
 module.exports = router;
