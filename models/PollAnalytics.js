@@ -10,7 +10,7 @@ const PollAnalyticsSchema = new mongoose.Schema({
   options: [
     {
       optionId: { type: mongoose.Schema.Types.ObjectId, required: true },
-      selectionCount: { type: Number, default: 0 },
+      selectionCount: { type: Number, default: 1 },
     },
   ],
 });

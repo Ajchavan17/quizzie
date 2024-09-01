@@ -77,7 +77,7 @@ router.post("/quiz/:quizId/poll", async (req, res) => {
       );
 
       if (!option) {
-        option = { optionId: selectedOptionId, selectionCount: 0 };
+        option = { optionId: selectedOptionId, selectionCount: 1 };
         pollAnalytics.options.push(option);
       }
 
